@@ -6,10 +6,4 @@ using namespace rack;
 
 extern Plugin *plugin;
 
-////////////////////
-// module widgets
-////////////////////
-
-struct MessedUpOscWidget : ModuleWidget {
-	MessedUpOscWidget();
-};
+extern Model *modelMessedUpOsc;
