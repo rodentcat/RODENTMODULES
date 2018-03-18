@@ -26,11 +26,6 @@ struct MessedUpOsc : Module {
 
 	MessedUpOsc() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
 	void step() override;
-
-	// For more advanced Module features, read Rack's engine.hpp header file
-	// - toJson, fromJson: serialization of internal data
-	// - onSampleRateChange: event triggered by a change of sample rate
-	// - reset, randomize: implements special behavior when user clicks these from the context menu
 };
 
 
@@ -41,7 +36,7 @@ void MessedUpOsc::step() {
 	// Compute the frequency from the pitch parameter and input
 	float pitch = params[PITCH_PARAM].value;
 	pitch += inputs[PITCH_INPUT].value;
-	pitch = clampf(pitch, -4.0, 4.0);
+	pitch = clamp(pitch, -4.0f, 4.0f);
 	float freq = 440.0 * powf(2.0, pitch);
 
 	// Accumulate the phase
@@ -74,9 +69,14 @@ void MessedUpOsc::step() {
 }
 
 
-MessedUpOscWidget::MessedUpOscWidget() {
-	MessedUpOsc *module = new MessedUpOsc();
-	setModule(module);
+struct MessedUpOscWidget : ModuleWidget {
+	MessedUpOscWidget(MessedUpOsc *module);
+};
+
+
+MessedUpOscWidget::MessedUpOscWidget(MessedUpOsc *module) : ModuleWidget(module) {
+
+	/*
 	box.size = Vec(208, RACK_GRID_HEIGHT);
 
 	{
@@ -85,19 +85,22 @@ MessedUpOscWidget::MessedUpOscWidget() {
 		panel->setBackground(SVG::load(assetPlugin(plugin, "res/MessedUpOsc.svg")));
 		addChild(panel);
 	}
+	*/
+	
+	setPanel(SVG::load(assetPlugin(plugin, "res/MessedUpOsc.svg")));
+	
+	addChild(Widget::create<ScrewSilver>(Vec(15, 0)));
+	addChild(Widget::create<ScrewSilver>(Vec(box.size.x - 30, 0)));
+	addChild(Widget::create<ScrewSilver>(Vec(15, 365)));
+	addChild(Widget::create<ScrewSilver>(Vec(box.size.x - 30, 365)));
 
-	addChild(createScrew<ScrewSilver>(Vec(15, 0)));
-	addChild(createScrew<ScrewSilver>(Vec(box.size.x - 30, 0)));
-	addChild(createScrew<ScrewSilver>(Vec(15, 365)));
-	addChild(createScrew<ScrewSilver>(Vec(box.size.x - 30, 365)));
+	addParam(ParamWidget::create<Davies1900hWhiteKnob>(Vec(65, 230), module, MessedUpOsc::PITCH_PARAM, -3.0, 3.0, 0.0));
+    addParam(ParamWidget::create<Davies1900hWhiteKnob>(Vec(24, 150), module, MessedUpOsc::PW_PARAM, -3.0, 3.0, 0.0));
 
-	addParam(createParam<Davies1900hWhiteKnob>(Vec(65, 230), module, MessedUpOsc::PITCH_PARAM, -3.0, 3.0, 0.0));
-    addParam(createParam<Davies1900hWhiteKnob>(Vec(24, 150), module, MessedUpOsc::PW_PARAM, -3.0, 3.0, 0.0));
+	addInput(Port::create<PJ301MPort>(Vec(115, 236), Port::INPUT, module, MessedUpOsc::PITCH_INPUT));
+    addInput(Port::create<PJ301MPort>(Vec(137, 152), Port::INPUT, module, MessedUpOsc::PW_INPUT));
 
-	addInput(createInput<PJ301MPort>(Vec(115, 236), module, MessedUpOsc::PITCH_INPUT));
-    
-    addInput(createInput<PJ301MPort>(Vec(137, 152), module, MessedUpOsc::PW_INPUT));
-
-	addOutput(createOutput<PJ301MPort>(Vec(90, 300), module, MessedUpOsc::SQUARE_OUTPUT));
-
+	addOutput(Port::create<PJ301MPort>(Vec(90, 300), Port::OUTPUT, module, MessedUpOsc::SQUARE_OUTPUT));
 }
+
+Model *modelMessedUpOsc = Model::create<MessedUpOsc, MessedUpOscWidget>("RODENTMODULES", "MessedUpOsc", "Messed Up Oscillator", OSCILLATOR_TAG);
